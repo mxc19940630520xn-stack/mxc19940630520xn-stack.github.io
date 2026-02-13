@@ -88,6 +88,18 @@ const moveNoButton = () => {
     // Grow "Yes" button
     yesScale += 0.3;
 
+    // Fix for "No" button disappearing:
+    // The .card has a transform, which creates a new containing block for position: fixed.
+    // This messes up viewport-relative coordinates.
+    // Solution: Move existing "No" button to document.body so it can position freely.
+    if (noBtn.parentElement !== document.body) {
+        // Calculate current offsets to prevent jump before moving? 
+        // Actually, we are about to move it to a random spot anyway, so just append.
+        document.body.appendChild(noBtn);
+        // Ensure z-index is high enough
+        noBtn.style.zIndex = "1000";
+    }
+
     // Calculate viewport bounds
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -97,24 +109,23 @@ const moveNoButton = () => {
     const btnHeight = noBtn.offsetHeight;
 
     // Calculate safe area (ensure it stays fully visible with padding)
-    // We use a safe margin of 20px
     const maxLeft = viewportWidth - btnWidth - 20;
     const maxTop = viewportHeight - btnHeight - 20;
 
-    // Ensure we don't have negative range if screen is tiny
+    // Ensure we don't have negative range
     const safeMaxLeft = Math.max(20, maxLeft);
     const safeMaxTop = Math.max(20, maxTop);
 
-    // Generate random position within safe bounds
+    // Generate random position
     const randomLeft = Math.floor(Math.random() * (safeMaxLeft - 20) + 20);
     const randomTop = Math.floor(Math.random() * (safeMaxTop - 20) + 20);
 
-    // Apply position using fixed positioning to guarantee screen coordinates
+    // Apply styles
     noBtn.style.position = 'fixed';
     noBtn.style.left = randomLeft + 'px';
     noBtn.style.top = randomTop + 'px';
 
-    // Apply scale (translate is no longer needed since we position absolutely/fixed)
+    // Apply scales
     noBtn.style.transform = `scale(${noScale})`;
     yesBtn.style.transform = `scale(${yesScale})`;
 };
