@@ -5,17 +5,17 @@ let index = 0;
 const typeWriter = () => {
     if (index < message.length) {
         const textContainer = document.getElementById("typewriter");
+        const char = message.charAt(index);
 
         // Handle newline characters
-        if (message.charAt(index) === '\n') {
-            textContainer.innerHTML += '<br>';
+        if (char === '\n') {
+            textContainer.appendChild(document.createElement('br'));
         } else {
-            textContainer.innerHTML += message.charAt(index);
+            // Append text node to avoid re-parsing innerHTML (fixes jitter)
+            textContainer.appendChild(document.createTextNode(char));
         }
 
         index++;
-        // If it's a newline, we can speed it up slightly to avoid "stutter" feeling,
-        // or just keep uniform speed. 75ms is faster than 100ms.
         setTimeout(typeWriter, speed);
     } else {
         // Typing finished
@@ -37,7 +37,9 @@ window.onload = () => {
 
 function createStars() {
     const starContainer = document.getElementById('background-animation');
-    const starCount = 50;
+    // Reduce stars on mobile for performance
+    const isMobile = window.innerWidth < 768;
+    const starCount = isMobile ? 20 : 50;
 
     for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
@@ -74,22 +76,47 @@ const getRandomNumber = (min, max) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
+let noScale = 1;
+let yesScale = 1;
+
 const moveNoButton = () => {
-    const containerRect = document.querySelector('.card').getBoundingClientRect();
-    const btnRect = noBtn.getBoundingClientRect();
+    // Shrink "No" button
+    if (noScale > 0.1) {
+        noScale -= 0.1;
+    }
 
-    // Calculate new position within the card or viewport safely
-    // We'll move it by translating it relative to its current position
-    // to avoid layout thrashing, but simpler to just set absolute/fixed
-    // Let's just use transform translate for smoothness
+    // Grow "Yes" button
+    yesScale += 0.3;
 
-    // Increase movement range to make it harder to catch
-    const x = getRandomNumber(-200, 200);
-    const y = getRandomNumber(-200, 200);
+    // Calculate viewport bounds
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-    noBtn.style.transform = `translate(${x}px, ${y}px)`;
+    // Get button dimensions
+    const btnWidth = noBtn.offsetWidth;
+    const btnHeight = noBtn.offsetHeight;
 
-    // Optional: make it smaller each time? Nah, just moving is annoying enough :)
+    // Calculate safe area (ensure it stays fully visible with padding)
+    // We use a safe margin of 20px
+    const maxLeft = viewportWidth - btnWidth - 20;
+    const maxTop = viewportHeight - btnHeight - 20;
+
+    // Ensure we don't have negative range if screen is tiny
+    const safeMaxLeft = Math.max(20, maxLeft);
+    const safeMaxTop = Math.max(20, maxTop);
+
+    // Generate random position within safe bounds
+    const randomLeft = Math.floor(Math.random() * (safeMaxLeft - 20) + 20);
+    const randomTop = Math.floor(Math.random() * (safeMaxTop - 20) + 20);
+
+    // Apply position using fixed positioning to guarantee screen coordinates
+    noBtn.style.position = 'fixed';
+    noBtn.style.left = randomLeft + 'px';
+    noBtn.style.top = randomTop + 'px';
+
+    // Apply scale (translate is no longer needed since we position absolutely/fixed)
+    noBtn.style.transform = `scale(${noScale})`;
+    yesBtn.style.transform = `scale(${yesScale})`;
 };
 
 // Desktop: hover
